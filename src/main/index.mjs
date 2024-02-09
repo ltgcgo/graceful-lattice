@@ -15,6 +15,7 @@ let listenObject;
 let listenAddr = Deno.env.get("LISTEN_ADDR");
 let listenPort = parseInt(Deno.env.get("LISTEN_PORT"));
 let graceJail = parseInt(Deno.env.get("GRACE_JAIL"));
+let cwd = Deno.cwd();
 
 // Configure the listener
 listenObject = JSON.parse(`{"hostname":"0.0.0.0","port":${listenPort || 8000}}`);
@@ -27,6 +28,8 @@ listenObject.onListen = function ({hostname, port}) {
 listenObject.handler = async function (req, connInfo) {
 	let clientAddr = connInfo.remoteAddr;
 	console.debug(`> ${req.method.toUpperCase().padStart(7, " ")} --- ${clientAddr.hostname}:${clientAddr.port} ${req.url}`);
+	connInfo.jail = !!graceJail;
+	connInfo.cwd = cwd;
 	let resp;
 	try {
 		switch (req.method.toLowerCase()) {
@@ -43,7 +46,7 @@ listenObject.handler = async function (req, connInfo) {
 			};
 		};
 	} catch (err) {
-		resp = new Response(pageError.replace("${errorTrace}", err.stack.replaceAll(`file://${Deno.cwd()}`, "@app")), resp500);
+		resp = new Response(pageError.replace("${errorTrace}", err.stack.replaceAll(`file://${cwd}`, "@app")), resp500);
 		console.error(err.stack);
 	};
 	console.debug(`< ${req.method.toUpperCase().padStart(7, " ")} ${resp.status} ${clientAddr.hostname}:${clientAddr.port} ${req.url}`);

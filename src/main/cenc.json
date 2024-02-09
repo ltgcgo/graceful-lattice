@@ -1,0 +1,8 @@
+{
+	"zst": "zstd",
+	"br": "br",
+	"xz": "xz",
+	"bz2": "bzip2",
+	"lz": "lzip",
+	"gz": "gzip"
+}

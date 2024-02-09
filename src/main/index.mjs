@@ -6,7 +6,8 @@ import pageError from "./error.htm";
 import reqHandler from "./handler.mjs";
 
 // Global objects
-const resp204 = JSON.parse(`{"status":204,"headers":{"Content-Type":"text/html"}}`);
+const resp200 = JSON.parse(`{"status":200,"headers":{"Content-Type":"text/html"}}`);
+const resp405 = JSON.parse(`{"status":405,"headers":{"Content-Type":"text/html"}}`);
 const resp500 = JSON.parse(`{"status":500,"headers":{"Content-Type":"text/html"}}`);
 
 // Load environment variables and arguments
@@ -28,12 +29,22 @@ listenObject.handler = async function (req, connInfo) {
 	console.debug(`> ${req.method.toUpperCase().padStart(7, " ")} --- ${clientAddr.hostname}:${clientAddr.port} ${req.url}`);
 	let resp;
 	try {
-		resp = await reqHandler(req, connInfo);
-		if (!resp) {
-			resp = new Response(pageError.replace("${errorTrace}", "The handler did not return any response."), resp204);
+		switch (req.method.toLowerCase()) {
+			case "get":
+			case "head": {
+				resp = await reqHandler(req, connInfo);
+				if (!resp) {
+					resp = new Response(pageError.replace("${errorTrace}", "The handler did not return any response."), resp200);
+				};
+				break;
+			};
+			default: {
+				resp = new Response(pageError.replace("${errorTrace}", "Unsupported method."), resp405);
+			};
 		};
 	} catch (err) {
-		resp = new Response(pageError.replace("${errorTrace}", err.stack.replaceAll(Deno.cwd(), "@app")), resp500);
+		resp = new Response(pageError.replace("${errorTrace}", err.stack.replaceAll(`file://${Deno.cwd()}`, "@app")), resp500);
+		console.error(err.stack);
 	};
 	console.debug(`< ${req.method.toUpperCase().padStart(7, " ")} ${resp.status} ${clientAddr.hostname}:${clientAddr.port} ${req.url}`);
 	return resp;

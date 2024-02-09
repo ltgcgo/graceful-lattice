@@ -32,7 +32,7 @@ if [ -d "./src" ]; then
 		fi
 		if [ -e "src/${dir}/index.mjs" ] ; then
 			echo "Building JS module \"${dir}\"..."
-			shx live $dir --minify $1 > /dev/null
+			shx live $dir --minify-syntax $1 > /dev/null
 			sed -zi "$substRules" "dist/${dir}.mjs"
 		fi
 	done
